@@ -1,0 +1,61 @@
+DROP DATABASE IF EXISTS nostalgia;
+
+CREATE DATABASE nostalgia;
+
+\c nostalgia;
+
+
+CREATE TABLE users 
+(
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(30) UNIQUE NOT NULL,
+  password VARCHAR(100) NOT NULL
+  
+);
+
+
+CREATE TABLE decade
+(
+ id SERIAL PRIMARY KEY,
+  name VARCHAR(30) NOT NULL,
+  description VARCHAR(1000)
+
+  -- images???
+);
+
+
+CREATE TABLE post 
+(
+  id INTEGER PRIMARY KEY,
+  title VARCHAR(25) DEFAULT NULL,
+  url VARCHAR(2000),
+  user_id INTEGER REFERENCES users ON DELETE SET NULL,
+  i_remember INTEGER
+  -- createdAt DATETIME NOT NULL,
+);
+
+CREATE TABLE decade_posts
+(
+    id INTEGER PRIMARY KEY,
+    decade_id INTEGER REFERENCES decade ON DELETE CASCADE,
+    post_id INTEGER REFERENCES post ON DELETE CASCADE
+);
+
+
+CREATE TABLE comments 
+(
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER REFERENCES users ON DELETE SET NULL,
+  post_id INTEGER REFERENCES post ON DELETE CASCADE,
+  text VARCHAR(100),
+  created TIMESTAMP 
+   
+);
+CREATE TABLE user_memory 
+(
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER REFERENCES users ON DELETE SET NULL,
+  post_id INTEGER REFERENCES post ON DELETE CASCADE
+   
+);
+
