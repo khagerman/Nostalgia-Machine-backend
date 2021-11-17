@@ -5,7 +5,7 @@ const { NotFoundError } = require("../expressError");
 // CREATE TABLE comments
 // (
 //   id INTEGER PRIMARY KEY,
-//   user_id INTEGER REFERENCES users ON DELETE SET NULL,
+//   username INTEGER REFERENCES users ON DELETE SET NULL,
 //   post_id INTEGER REFERENCES post ON DELETE CASCADE,
 //   text VARCHAR(100),
 //   created TIMESTAMP
@@ -21,12 +21,12 @@ class Comment {
 
   ///get username
   //get user id
-  static async create(data, user_id, post_id) {
+  static async create(data, username, post_id) {
     const result = await db.query(
-      `INSERT INTO comments (text, user_id, post_id )
+      `INSERT INTO comments (text, username, post_id )
            VALUES ($1, $2, $3)
-           RETURNING id, text, created, user_id, post_id`,
-      [data.text, user_id, post_id]
+           RETURNING id, text, created, username, post_id`,
+      [data.text, username, post_id]
     );
     let comment = result.rows[0];
 
@@ -37,12 +37,12 @@ class Comment {
    *
   
    *
-   * Returns [{id, text, created, user_id, post_id}]
+   * Returns [{id, text, created, username, post_id}]
    * */
 
   static async get(id) {
     let result = await db.query(
-      `SELECT id, text, created, user_id, post_id FROM comments WHERE id =$1"
+      `SELECT id, text, created, username, post_id FROM comments WHERE id =$1"
     );`[id]
     );
 
@@ -50,7 +50,7 @@ class Comment {
 
     if (!comment) throw new NotFoundError(`No post ${id}`);
     //    id INTEGER PRIMARY KEY,
-    // user_id INTEGER REFERENCES users ON DELETE SET NULL,
+    // username INTEGER REFERENCES users ON DELETE SET NULL,
     // post_id INTEGER REFERENCES post ON DELETE CASCADE,
     // text VARCHAR(100),
     // created TIMESTAMP
@@ -62,7 +62,7 @@ class Comment {
    *
    *
    *
-   * Returns {id, text, created, user_id, post_id}
+   * Returns {id, text, created, username, post_id}
    *
    * Throws NotFoundError if not found.
    */
@@ -72,7 +72,7 @@ class Comment {
       `
       UPDATE post SET text= $1,
       WHERE id = $2
-      RETURNING id, text, created, user_id, post_id
+      RETURNING id, text, created, username, post_id
     `,
       [newText, id]
     );

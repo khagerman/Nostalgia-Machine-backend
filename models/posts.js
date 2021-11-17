@@ -20,7 +20,7 @@ class Post {
   static async create(data, id) {
     const result = await db.query(
       `INSERT INTO post (title,
-                        url,user_id  )
+                        url,username  )
            VALUES ($1, $2, $3)
            RETURNING id, title, url`,
       [data.title, data.url, id]
@@ -34,12 +34,12 @@ class Post {
    *
   
    *
-   * Returns [{ id, title, url, user_id, comments:{} }]
+   * Returns [{ id, title, url, username, comments:{} }]
    * */
 
   static async get(id) {
     let result = await db.query(
-      `SELECT id, title, url, i_remember, user_id FROM post WHERE id =$1"
+      `SELECT id, title, url, i_remember, username FROM post WHERE id =$1"
     );`[id]
     );
 
@@ -47,12 +47,12 @@ class Post {
 
     if (!post) throw new NotFoundError(`No post ${id}`);
     //    id INTEGER PRIMARY KEY,
-    // user_id INTEGER REFERENCES users ON DELETE SET NULL,
+    // username INTEGER REFERENCES users ON DELETE SET NULL,
     // post_id INTEGER REFERENCES post ON DELETE CASCADE,
     // text VARCHAR(100),
     // created TIMESTAMP
     let resComments = await db.query(
-      `SELECT id, user_id,text, created FROM comments WHERE post_id = $1
+      `SELECT id, username,text, created FROM comments WHERE post_id = $1
     );`[id]
     );
 
@@ -78,7 +78,7 @@ class Post {
       `
       UPDATE post SET title = $1, url  = $2 
       WHERE id = $3
-      RETURNING id, title, url, user_id, i_remember
+      RETURNING id, title, url, username, i_remember
     `,
       [newTitle, newURL, id]
     );

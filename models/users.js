@@ -22,7 +22,7 @@ class User {
   static async authenticate(username, password) {
     // try to find the user first
     const result = await db.query(
-      `SELECT id, username,
+      `SELECT  username,
                   password,
            FROM users
            WHERE username = $1`,
@@ -52,7 +52,7 @@ class User {
 
   static async register({ username, password }) {
     const duplicateCheck = await db.query(
-      `SELECT id, username
+      `SELECT username
            FROM users
            WHERE username = $1`,
       [username]
@@ -101,12 +101,12 @@ class User {
    * Throws NotFoundError if user not found.
    **/
 
-  static async get(userId) {
+  static async get(username) {
     const userRes = await db.query(
       `SELECT username,
            FROM users
-           WHERE id = $1`,
-      [id]
+           WHERE username= $1`,
+      [username]
     );
 
     const user = userRes.rows[0];
@@ -114,69 +114,24 @@ class User {
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
     const userPosts = await db.query(
-      `SELECT id, title, url, i_remember
+      `SELECT id, title, url
            FROM post 
-           WHERE post.user_id = $1`,
-      [userId]
+           WHERE post.username = $1`,
+      [username]
     );
 
     user.posts = userPosts.rows.map((p) => p.id);
     return user;
   }
 
-  // /** Update user data with `data`.
-  //  *
-  //  * This is a "partial update" --- it's fine if data doesn't contain
-  //  * all the fields; this only changes provided ones.
-  //  *
-  //  * Data can include:
-  //  *   { firstName, lastName, password, email, isAdmin }
-  //  *
-  //  * Returns { username, firstName, lastName, email, isAdmin }
-  //  *
-  //  * Throws NotFoundError if not found.
-  //  *
-  //  * WARNING: this function can set a new password or make a user an admin.
-  //  * Callers of this function must be certain they have validated inputs to this
-  //  * or a serious security risks are opened.
-  //  */
-
-  // static async update(username, data) {
-  //   if (data.password) {
-  //     data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
-  //   }
-
-  //   const { setCols, values } = sqlForPartialUpdate(data, {
-  //     firstName: "first_name",
-  //     lastName: "last_name",
-  //     isAdmin: "is_admin",
-  //   });
-  //   const usernameVarIdx = "$" + (values.length + 1);
-
-  //   const querySql = `UPDATE users
-  //                     SET ${setCols}
-  //                     WHERE username = ${usernameVarIdx}
-  //                     RETURNING username,
-  //                               first_name AS "firstName",
-  //                               last_name AS "lastName",
-  //                               email,
-  //                               is_admin AS "isAdmin"`;
-  //   const result = await db.query(querySql, [...values, username]);
-  //   const user = result.rows[0];
-
-  //   if (!user) throw new NotFoundError(`No user: ${username}`);
-
-  //   delete user.password;
-  //   return user;
-  // }
-
+  //
   /** Delete given user from database; returns undefined. */
 
-  static async remove(id) {
+  static async remove(username) {
     let result = await db.query(
       `DELETE
            FROM users
-           WHERE id = $1
+           WHERE username = $1
            RETURNING username`,
       [id]
     );
@@ -190,7 +145,7 @@ class User {
    *
    **/
   //todo make add a favortie
-  static async addFavorite(user_id, post_id) {
+  static async addFavorite(username, post_id) {
     const preCheck = await db.query(
       `SELECT id
            FROM post
@@ -204,25 +159,25 @@ class User {
     const preCheck2 = await db.query(
       `SELECT username
            FROM users
-           WHERE id = $1`,
-      [user_id]
+           WHERE username = $1`,
+      [username]
     );
     const user = preCheck2.rows[0];
 
-    if (!user) throw new NotFoundError(`No user: ${user_id}`);
+    if (!user) throw new NotFoundError(`No user: ${username}`);
     const duplicateCheck = await db.query(
-      `SELECT user_id, post_id
+      `SELECT username, post_id
             FROM user_memory
-            WHERE user_id = $1 AND post_id = $2`,
-      [user_id, post_id]
+            WHERE username = $1 AND post_id = $2`,
+      [username, post_id]
     );
 
     if (duplicateCheck.rows[0])
-      throw new BadRequestError(`User ${user_id} already liked'${post_id}'`);
+      throw new BadRequestError(`User ${username} already liked'${post_id}'`);
     await db.query(
-      `INSERT INTO user_memory (user_id, post_id)
+      `INSERT INTO user_memory (username, post_id)
            VALUES ($1, $2)`,
-      [user_id, post_id]
+      [username, post_id]
     );
   }
   /**delete a favorite: update db, returns undefined.
@@ -230,7 +185,7 @@ class User {
    *
    **/
   //todo delete a favortie
-  static async deleteFavorite(user_id, post_id) {
+  static async deleteFavorite(username, post_id) {
     const preCheck = await db.query(
       `SELECT id
            FROM post
@@ -244,27 +199,27 @@ class User {
     const preCheck2 = await db.query(
       `SELECT username
            FROM users
-           WHERE id = $1`,
-      [user_id]
+           WHERE username = $1`,
+      [username]
     );
     const user = preCheck2.rows[0];
 
-    if (!user) throw new NotFoundError(`No user: ${user_id}`);
+    if (!user) throw new NotFoundError(`No user: ${username}`);
     const likedCheck = await db.query(
-      `SELECT user_id, post_id
+      `SELECT username, post_id
             FROM user_memory
-            WHERE user_id = $1 AND post_id = $2`,
-      [user_id, post_id]
+            WHERE username = $1 AND post_id = $2`,
+      [username, post_id]
     );
 
     if (!duplicateCheck.rows[0])
-      throw new BadRequestError(`User ${user_id} never liked'${post_id}'`);
+      throw new BadRequestError(`User ${username} never liked'${post_id}'`);
     await db.query(
       `DELETE
            FROM user_memory
-           WHERE user_id = $1 AND post_id = $2
-           RETURNING user_id, post_id`,
-      [user_id, post_id]
+           WHERE username = $1 AND post_id = $2
+           RETURNING username, post_id`,
+      [username, post_id]
     );
   }
 
@@ -272,15 +227,15 @@ class User {
    *
    *returns {//todo}
    **/
-  static async getUserFavorites(user_id) {
+  static async getUserFavorites(username) {
     let result = await db.query(
       `SELECT id, title, url
              FROM posts
              LEFT JOIN user_memory
                ON post.id = post_id
                LEFT JOIN user
-            WHERE user.id= $1`,
-      [user_id]
+            WHERE username= $1`,
+      [username]
     );
     const favorites = result.rows;
 

@@ -21,19 +21,19 @@ const router = express.Router();
  * Authorization required:  same user-as-:username
  **/
 
-router.get("/:id", ensureCorrectUser, async function (req, res, next) {
+router.get("/:username", ensureCorrectUser, async function (req, res, next) {
   try {
-    const user = await User.get(+req.params.id);
+    const user = await User.get(req.params.username);
     return res.json({ user });
   } catch (err) {
     return next(err);
   }
 });
 
-router.delete("/:id", ensureCorrectUser, async function (req, res, next) {
+router.delete("/:username", ensureCorrectUser, async function (req, res, next) {
   try {
-    await User.remove(+req.params.id);
-    return res.json({ deleted: +req.params.id });
+    await User.remove(req.params.username);
+    return res.json({ deleted: req.params.username });
   } catch (err) {
     return next(err);
   }
@@ -47,12 +47,12 @@ router.delete("/:id", ensureCorrectUser, async function (req, res, next) {
  * */
 
 router.post(
-  "/:userid/favorites/:id",
+  "/:username/favorites/:id",
   ensureLoggedIn,
   async function (req, res, next) {
     try {
       const postId = +req.params.id;
-      await User.addFavorite(+req.params.userid, postId);
+      await User.addFavorite(req.params.username, postId);
       return res.json({ favoriteAdded: +postId });
     } catch (err) {
       return next(err);
@@ -61,13 +61,13 @@ router.post(
 );
 
 router.delete(
-  "/:userid/favorite/:id",
+  "/:username/favorite/:id",
   ensureCorrectUser,
   ensureLoggedIn,
   async function (req, res, next) {
     try {
       const postId = +req.params.id;
-      await User.deleteFavorite(+req.params.userid, postId);
+      await User.deleteFavorite(req.params.username, postId);
       return res.json({ removed: postId });
     } catch (err) {
       return next(err);
@@ -83,11 +83,11 @@ router.delete(
  **/
 
 router.get(
-  "/:userid/favorite",
+  "/:username/favorite",
   ensureCorrectUser,
   async function (req, res, next) {
     try {
-      const favorites = await User.getUserFavorites(+req.params.userid);
+      const favorites = await User.getUserFavorites(req.params.username);
       return res.json({ favorites });
     } catch (err) {
       return next(err);

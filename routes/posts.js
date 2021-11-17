@@ -102,7 +102,11 @@ router.post("/:id/comments/", ensureLoggedIn, async function (req, res, next) {
       throw new BadRequestError(errs);
     }
     const user = res.locals.user;
-    const comment = await Comment.create(req.body, +user.id, +req.params.id);
+    const comment = await Comment.create(
+      req.body,
+      user.username,
+      +req.params.id
+    );
     return res.status(201).json({ comment });
   } catch (err) {
     return next(err);
