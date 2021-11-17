@@ -10,11 +10,11 @@ const {
 const { BCRYPT_WORK_FACTOR } = require("../config.js");
 
 /** Related functions for users. */
-
+//todo add admin???
 class User {
   /** authenticate user with username, password.
    *
-   * Returns { username, first_name, last_name, email, is_admin }
+   * Returns {id, username}
    *
    * Throws UnauthorizedError is user not found or wrong password.
    **/
@@ -22,7 +22,7 @@ class User {
   static async authenticate(username, password) {
     // try to find the user first
     const result = await db.query(
-      `SELECT username,
+      `SELECT id, username,
                   password,
            FROM users
            WHERE username = $1`,
@@ -45,14 +45,14 @@ class User {
 
   /** Register user with data.
    *
-   * Returns { username, firstName, lastName, email, isAdmin }
+   * Returns { username, password }
    *
    * Throws BadRequestError on duplicates.
    **/
 
   static async register({ username, password }) {
     const duplicateCheck = await db.query(
-      `SELECT username
+      `SELECT id, username
            FROM users
            WHERE username = $1`,
       [username]
@@ -67,8 +67,7 @@ class User {
     const result = await db.query(
       `INSERT INTO users
            (username,
-            password,
-            )
+            password)
            VALUES ($1, $2)
            RETURNING username`,
       [username, hashedPassword]
@@ -81,7 +80,7 @@ class User {
 
   /** Find all users.
    *
-   * Returns [{ username, first_name, last_name, email, is_admin }, ...]
+   * Returns [{ username}, ...]
    **/
 
   static async findAll() {
@@ -97,7 +96,7 @@ class User {
   /** Given a username, return data about user.
    *
    * Returns { username,posts, likes}
-   *   where jobs is { id, title, company_handle, company_name, state }
+   *
    *
    * Throws NotFoundError if user not found.
    **/
@@ -125,111 +124,169 @@ class User {
     return user;
   }
 
-  /** Update user data with `data`.
-   *
-   * This is a "partial update" --- it's fine if data doesn't contain
-   * all the fields; this only changes provided ones.
-   *
-   * Data can include:
-   *   { firstName, lastName, password, email, isAdmin }
-   *
-   * Returns { username, firstName, lastName, email, isAdmin }
-   *
-   * Throws NotFoundError if not found.
-   *
-   * WARNING: this function can set a new password or make a user an admin.
-   * Callers of this function must be certain they have validated inputs to this
-   * or a serious security risks are opened.
-   */
+  // /** Update user data with `data`.
+  //  *
+  //  * This is a "partial update" --- it's fine if data doesn't contain
+  //  * all the fields; this only changes provided ones.
+  //  *
+  //  * Data can include:
+  //  *   { firstName, lastName, password, email, isAdmin }
+  //  *
+  //  * Returns { username, firstName, lastName, email, isAdmin }
+  //  *
+  //  * Throws NotFoundError if not found.
+  //  *
+  //  * WARNING: this function can set a new password or make a user an admin.
+  //  * Callers of this function must be certain they have validated inputs to this
+  //  * or a serious security risks are opened.
+  //  */
 
-  static async update(username, data) {
-    if (data.password) {
-      data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
-    }
+  // static async update(username, data) {
+  //   if (data.password) {
+  //     data.password = await bcrypt.hash(data.password, BCRYPT_WORK_FACTOR);
+  //   }
 
-    const { setCols, values } = sqlForPartialUpdate(data, {
-      firstName: "first_name",
-      lastName: "last_name",
-      isAdmin: "is_admin",
-    });
-    const usernameVarIdx = "$" + (values.length + 1);
+  //   const { setCols, values } = sqlForPartialUpdate(data, {
+  //     firstName: "first_name",
+  //     lastName: "last_name",
+  //     isAdmin: "is_admin",
+  //   });
+  //   const usernameVarIdx = "$" + (values.length + 1);
 
-    const querySql = `UPDATE users 
-                      SET ${setCols} 
-                      WHERE username = ${usernameVarIdx} 
-                      RETURNING username,
-                                first_name AS "firstName",
-                                last_name AS "lastName",
-                                email,
-                                is_admin AS "isAdmin"`;
-    const result = await db.query(querySql, [...values, username]);
-    const user = result.rows[0];
+  //   const querySql = `UPDATE users
+  //                     SET ${setCols}
+  //                     WHERE username = ${usernameVarIdx}
+  //                     RETURNING username,
+  //                               first_name AS "firstName",
+  //                               last_name AS "lastName",
+  //                               email,
+  //                               is_admin AS "isAdmin"`;
+  //   const result = await db.query(querySql, [...values, username]);
+  //   const user = result.rows[0];
 
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+  //   if (!user) throw new NotFoundError(`No user: ${username}`);
 
-    delete user.password;
-    return user;
-  }
+  //   delete user.password;
+  //   return user;
+  // }
 
   /** Delete given user from database; returns undefined. */
 
-  static async remove(username) {
+  static async remove(id) {
     let result = await db.query(
       `DELETE
            FROM users
-           WHERE username = $1
+           WHERE id = $1
            RETURNING username`,
-      [username]
+      [id]
     );
     const user = result.rows[0];
 
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+    if (!user) throw new NotFoundError(`No user: ${id}`);
   }
 
-  /** Apply for job: update db, returns undefined.
+  /**Add a favorite: update db, returns undefined.
    *
-   * - username: username applying for job
-   * - jobId: job id
+   *
    **/
-
-  static async applyToJob(username, jobId) {
+  //todo make add a favortie
+  static async addFavorite(user_id, post_id) {
     const preCheck = await db.query(
       `SELECT id
-           FROM jobs
+           FROM post
            WHERE id = $1`,
-      [jobId]
+      [post_id]
     );
-    const job = preCheck.rows[0];
+    const post = preCheck.rows[0];
 
-    if (!job) throw new NotFoundError(`No job: ${jobId}`);
+    if (!job) throw new NotFoundError(`No post: ${post_id}`);
 
     const preCheck2 = await db.query(
       `SELECT username
            FROM users
-           WHERE username = $1`,
-      [username]
+           WHERE id = $1`,
+      [user_id]
     );
     const user = preCheck2.rows[0];
 
-    if (!user) throw new NotFoundError(`No username: ${username}`);
+    if (!user) throw new NotFoundError(`No user: ${user_id}`);
+    const duplicateCheck = await db.query(
+      `SELECT user_id, post_id
+            FROM user_memory
+            WHERE user_id = $1 AND post_id = $2`,
+      [user_id, post_id]
+    );
 
+    if (duplicateCheck.rows[0])
+      throw new BadRequestError(`User ${user_id} already liked'${post_id}'`);
     await db.query(
-      `INSERT INTO applications (job_id, username)
+      `INSERT INTO user_memory (user_id, post_id)
            VALUES ($1, $2)`,
-      [jobId, username]
+      [user_id, post_id]
     );
   }
-}
-// get user likes
-// const userLikes = await db.query(
-//   `SELECT id, title,url, i_remember
-//              FROM post
-//                LEFT JOIN user_memory
-//                  ON post.id = post_id
-//                LEFT JOIN users ON mt.tag_code = t.code
-//              WHERE user_id = $1;`,
-//   [userId]
-// );
+  /**delete a favorite: update db, returns undefined.
+   *
+   *
+   **/
+  //todo delete a favortie
+  static async deleteFavorite(user_id, post_id) {
+    const preCheck = await db.query(
+      `SELECT id
+           FROM post
+           WHERE id = $1`,
+      [post_id]
+    );
+    const post = preCheck.rows[0];
 
-// remove from favorite
+    if (!post) throw new NotFoundError(`No post: ${post_id}`);
+
+    const preCheck2 = await db.query(
+      `SELECT username
+           FROM users
+           WHERE id = $1`,
+      [user_id]
+    );
+    const user = preCheck2.rows[0];
+
+    if (!user) throw new NotFoundError(`No user: ${user_id}`);
+    const likedCheck = await db.query(
+      `SELECT user_id, post_id
+            FROM user_memory
+            WHERE user_id = $1 AND post_id = $2`,
+      [user_id, post_id]
+    );
+
+    if (!duplicateCheck.rows[0])
+      throw new BadRequestError(`User ${user_id} never liked'${post_id}'`);
+    await db.query(
+      `DELETE
+           FROM user_memory
+           WHERE user_id = $1 AND post_id = $2
+           RETURNING user_id, post_id`,
+      [user_id, post_id]
+    );
+  }
+
+  /**get all users favorites
+   *
+   *returns {//todo}
+   **/
+  static async getUserFavorites(user_id) {
+    let result = await db.query(
+      `SELECT id, title, url
+             FROM posts
+             LEFT JOIN user_memory
+               ON post.id = post_id
+               LEFT JOIN user
+            WHERE user.id= $1`,
+      [user_id]
+    );
+    const favorites = result.rows;
+
+    if (!favorites) throw new NotFoundError(`No user favorites`);
+    return favorites;
+  }
+}
+
 module.exports = User;

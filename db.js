@@ -1,12 +1,8 @@
+/** Database setup for nostalgia. */
 const { Client } = require("pg");
+const { getDatabaseUri } = require("./config");
 
-let DB_URI;
-
-function getDatabaseUri() {
-  return process.env.NODE_ENV === "test"
-    ? "postgresql:///nostalgia_test"
-    : process.env.DATABASE_URL || "postgresql:///nostalgia";
-}
+let db;
 
 if (process.env.NODE_ENV === "production") {
   db = new Client({

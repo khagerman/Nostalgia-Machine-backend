@@ -1,25 +1,27 @@
 const db = require("../db");
 const { NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate } = require("../helpers/sql");
 
 /** Related functions for companies. */
 
 // TODO add post, delete post, get user id from saved? edit post???
+
+//post comments
 class Post {
-  /** Create a job (from data), update db, return new job data.
+  /** Create a post (from data), update db, return new job data.
    *
-   * data should be { title, salary, equity, companyHandle }
+   * data should be { title, url }
    *
-   * Returns { id, title, salary, equity, companyHandle }
+   * Returns { id, title, url }
    **/
 
   ///get username
   //get user id
+
   static async create(data, id) {
     const result = await db.query(
       `INSERT INTO post (title,
-                        url,user_id    )
-           VALUES ($1, $2, $3, $4)
+                        url,user_id  )
+           VALUES ($1, $2, $3)
            RETURNING id, title, url`,
       [data.title, data.url, id]
     );
@@ -28,144 +30,83 @@ class Post {
     return post;
   }
 
-  /** Find all jobs (optional filter on searchFilters).
+  /** Find post by id (
    *
-   * searchFilters (all optional):
-   * - minSalary
-   * - hasEquity (true returns only jobs with equity > 0, other values ignored)
-   * - title (will find case-insensitive, partial matches)
+  
    *
-   * Returns [{ id, title, salary, equity, companyHandle, companyName }, ...]
+   * Returns [{ id, title, url, user_id, comments:{} }]
    * */
 
-  static async findAll(decade_id) {
-    let query = `SELECT j.id,
-                        j.title,
-                        j.salary,
-                        j.equity,
-                        j.company_handle AS "companyHandle",
-                        c.name AS "companyName"
-                 FROM jobs j 
-                   LEFT JOIN companies AS c ON c.handle = j.company_handle`;
-
-    // For each possible search term, add to whereExpressions and
-    // queryValues so we can generate the right SQL
-
-    if (minSalary !== undefined) {
-      queryValues.push(minSalary);
-      whereExpressions.push(`salary >= $${queryValues.length}`);
-    }
-
-    if (hasEquity === true) {
-      whereExpressions.push(`equity > 0`);
-    }
-
-    if (title !== undefined) {
-      queryValues.push(`%${title}%`);
-      whereExpressions.push(`title ILIKE $${queryValues.length}`);
-    }
-
-    if (whereExpressions.length > 0) {
-      query += " WHERE " + whereExpressions.join(" AND ");
-    }
-
-    // Finalize query and return results
-
-    query += " ORDER BY title";
-    const jobsRes = await db.query(query, queryValues);
-    return jobsRes.rows;
-  }
-
-  /** Given a job id, return data about job.
-   *
-   * Returns { id, title, salary, equity, companyHandle, company }
-   *   where company is { handle, name, description, numEmployees, logoUrl }
-   *
-   * Throws NotFoundError if not found.
-   **/
-
   static async get(id) {
-    const jobRes = await db.query(
-      `SELECT id,
-                  title,
-                  salary,
-                  equity,
-                  company_handle AS "companyHandle"
-           FROM jobs
-           WHERE id = $1`,
-      [id]
+    let result = await db.query(
+      `SELECT id, title, url, i_remember, user_id FROM post WHERE id =$1"
+    );`[id]
     );
 
-    const job = jobRes.rows[0];
+    let post = result.rows[0];
 
-    if (!job) throw new NotFoundError(`No job: ${id}`);
-
-    const companiesRes = await db.query(
-      `SELECT handle,
-                  name,
-                  description,
-                  num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
-           WHERE handle = $1`,
-      [job.companyHandle]
+    if (!post) throw new NotFoundError(`No post ${id}`);
+    //    id INTEGER PRIMARY KEY,
+    // user_id INTEGER REFERENCES users ON DELETE SET NULL,
+    // post_id INTEGER REFERENCES post ON DELETE CASCADE,
+    // text VARCHAR(100),
+    // created TIMESTAMP
+    let resComments = await db.query(
+      `SELECT id, user_id,text, created FROM comments WHERE post_id = $1
+    );`[id]
     );
 
-    delete job.companyHandle;
-    job.company = companiesRes.rows[0];
-
-    return job;
+    return post;
   }
 
-  /** Update job data with `data`.
+  /** Update decade data with `data`.
    *
    * This is a "partial update" --- it's fine if data doesn't contain
    * all the fields; this only changes provided ones.
    *
-   * Data can include: { title, salary, equity }
+   * Data can include: { newName, newDescription }
    *
-   * Returns { id, title, salary, equity, companyHandle }
+   * Returns {name, description }
    *
    * Throws NotFoundError if not found.
    */
 
-  static async update(id, data) {
-    const { setCols, values } = sqlForPartialUpdate(data, {});
-    const idVarIdx = "$" + (values.length + 1);
+  //   todo make private
 
-    const querySql = `UPDATE jobs 
-                      SET ${setCols} 
-                      WHERE id = ${idVarIdx} 
-                      RETURNING id, 
-                                title, 
-                                salary, 
-                                equity,
-                                company_handle AS "companyHandle"`;
-    const result = await db.query(querySql, [...values, id]);
-    const job = result.rows[0];
+  static async update(id, newTitle, newURL) {
+    const result = await db.query(
+      `
+      UPDATE post SET title = $1, url  = $2 
+      WHERE id = $3
+      RETURNING id, title, url, user_id, i_remember
+    `,
+      [newTitle, newURL, id]
+    );
 
-    if (!job) throw new NotFoundError(`No job: ${id}`);
+    let post = result.rows[0];
 
-    return job;
+    if (!post) throw new NotFoundError(`No post ${id}`);
+
+    return post;
   }
 
-  /** Delete given job from database; returns undefined.
+  /** Delete given post from database; returns undefined.
    *
-   * Throws NotFoundError if company not found.
+   * Throws NotFoundError if post not found.
    **/
 
   static async remove(id) {
     const result = await db.query(
       `DELETE
-           FROM jobs
+           FROM post
            WHERE id = $1
            RETURNING id`,
       [id]
     );
-    const job = result.rows[0];
+    const post = result.rows[0];
 
-    if (!job) throw new NotFoundError(`No job: ${id}`);
+    if (!post) throw new NotFoundError(`No post: ${id}`);
   }
 }
 
-module.exports = Job;
+module.exports = Post;

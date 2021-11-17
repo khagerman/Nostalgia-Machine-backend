@@ -1,17 +1,16 @@
 //todo get all decades, update decade, add decade, remove decade
-
+//todo make private probably
 const db = require("../db");
 const { NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate } = require("../helpers/sql");
 
-/** Related functions for companies. */
+/** Related functions for decade */
 
 class Decade {
   /** Create a decade (from data), update db, return new decade data.
    *
-   * data should be { title, salary, equity, companyHandle }
+   * data should be { name, description }
    *
-   * Returns { id, title, salary, equity, companyHandle }
+   * Returns { id, name, description }
    **/
   //todo backf=ground image, profile image??
   static async create({ name, description }) {
@@ -26,65 +25,25 @@ class Decade {
     return decade;
   }
 
-  /** Find all jobs (optional filter on searchFilters).
+  /** Find all decades (
    *
-   * searchFilters (all optional):
-   * - minSalary
-   * - hasEquity (true returns only jobs with equity > 0, other values ignored)
-   * - title (will find case-insensitive, partial matches)
+  
    *
-   * Returns [{ id, title, salary, equity, companyHandle, companyName }, ...]
+   * Returns [{ id, name, description}]
    * */
 
-  static async findAll({ minSalary, hasEquity, title } = {}) {
-    let query = `SELECT j.id,
-                        j.title,
-                        j.salary,
-                        j.equity,
-                        j.company_handle AS "companyHandle",
-                        c.name AS "companyName"
-                 FROM jobs j 
-                   LEFT JOIN companies AS c ON c.handle = j.company_handle`;
-    let whereExpressions = [];
-    let queryValues = [];
-
-    // For each possible search term, add to whereExpressions and
-    // queryValues so we can generate the right SQL
-
-    if (minSalary !== undefined) {
-      queryValues.push(minSalary);
-      whereExpressions.push(`salary >= $${queryValues.length}`);
-    }
-
-    if (hasEquity === true) {
-      whereExpressions.push(`equity > 0`);
-    }
-
-    if (title !== undefined) {
-      queryValues.push(`%${title}%`);
-      whereExpressions.push(`title ILIKE $${queryValues.length}`);
-    }
-
-    if (whereExpressions.length > 0) {
-      query += " WHERE " + whereExpressions.join(" AND ");
-    }
-
-    // Finalize query and return results
-
-    query += " ORDER BY title";
-    const jobsRes = await db.query(query, queryValues);
-    return jobsRes.rows;
+  static async getAll() {
+    let result = await db.query("SELECT id, name, description FROM decade");
+    return result.rows;
   }
 
   /** Given a decade id, return data about decade.
    *
-   * Returns { id, title, salary, equity, companyHandle, company }
-   *   where company is { handle, name, description, numEmployees, logoUrl }
+   * Returns { id, title, description and posts matching id }
+
    *
    * Throws NotFoundError if not found.
    **/
-
-  //todo get posts by decade
 
   static async get(id) {
     const decadeRes = await db.query(
@@ -98,7 +57,16 @@ class Decade {
     const decade = decadeRes.rows[0];
 
     if (!decade) throw new NotFoundError(`No decade: ${id}`);
-
+    const postsRes = await db.query(
+      `SELECT post.id, title, url, i_remember 
+           FROM post
+           LEFT JOIN decade_posts
+           ON post.id = post_id
+           LEFT JOIN decade
+           ON decade_id = $1;`,
+      [id]
+    );
+    decade.posts = postsRes.rows[0];
     return decade;
   }
 
@@ -107,19 +75,21 @@ class Decade {
    * This is a "partial update" --- it's fine if data doesn't contain
    * all the fields; this only changes provided ones.
    *
-   * Data can include: { title, salary, equity }
+   * Data can include: { newName, newDescription }
    *
-   * Returns { id, title, salary, equity, companyHandle }
+   * Returns {name, description }
    *
    * Throws NotFoundError if not found.
    */
+
+  //   todo make private
 
   static async update(id, newName, newDescription) {
     const result = await db.query(
       `
       UPDATE decade SET name = $1, description  = $2 
       WHERE id = $3
-      RETURNING id, name, age
+      RETURNING id, name, description
     `,
       [newName, newDescription, id]
     );
@@ -135,7 +105,7 @@ class Decade {
    *
    * Throws NotFoundError if decade not found.
    **/
-
+  //   todo make private
   static async remove(id) {
     const result = await db.query(
       `DELETE
