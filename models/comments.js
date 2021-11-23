@@ -1,26 +1,15 @@
-//todo new comment, edit comment, delete comment
 const db = require("../db");
 const { NotFoundError } = require("../expressError");
-
-// CREATE TABLE comments
-// (
-//   id INTEGER PRIMARY KEY,
-//   username INTEGER REFERENCES users ON DELETE SET NULL,
-//   post_id INTEGER REFERENCES post ON DELETE CASCADE,
-//   text VARCHAR(100),
-//   created TIMESTAMP
 
 //post comments
 class Comment {
   /** Create a comment (from data), update db, return new comment
    *
-   * data should be { title, url }
+   * data should be { title, url, post_id }
    *
-   * Returns { id, title, url }
+   * Returns { id, text, created, username, post_id }
    **/
 
-  ///get username
-  //get user id
   static async create(data, username, post_id) {
     const result = await db.query(
       `INSERT INTO comments (text, username, post_id )
@@ -42,18 +31,14 @@ class Comment {
 
   static async get(id) {
     let result = await db.query(
-      `SELECT id, text, created, username, post_id FROM comments WHERE id =$1"
-    );`[id]
+      `SELECT id, text, created, username, post_id FROM comments WHERE id =$1
+    `,
+      [id]
     );
 
     let comment = result.rows[0];
 
     if (!comment) throw new NotFoundError(`No post ${id}`);
-    //    id INTEGER PRIMARY KEY,
-    // username INTEGER REFERENCES users ON DELETE SET NULL,
-    // post_id INTEGER REFERENCES post ON DELETE CASCADE,
-    // text VARCHAR(100),
-    // created TIMESTAMP
 
     return comment;
   }
@@ -63,18 +48,29 @@ class Comment {
    *
    *
    * Returns {id, text, created, username, post_id}
+   *  Throws UnauthorizedError if logged in user is not the author of post
    *
    * Throws NotFoundError if not found.
    */
 
-  static async update(id, newText) {
+  static async update(id, data, username) {
+    const getUsername = await db.query(
+      `SELECT username FROM comments WHERE id=$1
+    `,
+      [id]
+    );
+    let author = getUsername.rows[0];
+
+    if (author.username !== username) {
+      throw new UnauthorizedError("You must be author to edit a comment");
+    }
     const result = await db.query(
       `
-      UPDATE post SET text= $1,
+      UPDATE comments SET text= $1
       WHERE id = $2
       RETURNING id, text, created, username, post_id
     `,
-      [newText, id]
+      [data.text, id]
     );
 
     let comment = result.rows[0];
@@ -84,15 +80,25 @@ class Comment {
     return comment;
   }
 
-  /** Delete given comment from database; returns undefined.
-   *
+  /** Delete given comment from database; returns id of deleted comment
+   * Throws UnauthorizedError if logged in user is not the author of post
    * Throws NotFoundError if comment not found.
    **/
 
-  static async remove(id) {
+  static async remove(id, username) {
+    const getUsername = await db.query(
+      `SELECT username FROM comments WHERE id =$1
+    `,
+      [id]
+    );
+    let author = getUsername.rows[0];
+    console.log(author);
+    if (author.username !== username) {
+      throw new UnauthorizedError("You must be author to edit a comment");
+    }
     const result = await db.query(
       `DELETE
-           FROM comment
+           FROM comments
            WHERE id = $1
            RETURNING id`,
       [id]

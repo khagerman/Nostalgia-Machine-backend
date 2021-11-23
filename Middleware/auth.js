@@ -38,6 +38,10 @@ function ensureLoggedIn(req, res, next) {
     return next(err);
   }
 }
+/** Middleware to use when they must be logged in and the authorized user
+ *
+ * If not, raises Unauthorized.
+ */
 
 function ensureCorrectUser(req, res, next) {
   try {

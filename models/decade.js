@@ -58,22 +58,17 @@ class Decade {
 
     if (!decade) throw new NotFoundError(`No decade: ${id}`);
     const postsRes = await db.query(
-      `SELECT post.id, title, url, i_remember 
+      `SELECT post.id, title, url
            FROM post
-           LEFT JOIN decade_posts
-           ON post.id = post_id
-           LEFT JOIN decade
-           ON decade_id = $1;`,
+           WHERE decade_id =$1`,
       [id]
     );
-    decade.posts = postsRes.rows[0];
+    decade.posts = postsRes.rows;
     return decade;
   }
 
   /** Update decade data with `data`.
    *
-   * This is a "partial update" --- it's fine if data doesn't contain
-   * all the fields; this only changes provided ones.
    *
    * Data can include: { newName, newDescription }
    *
@@ -81,8 +76,6 @@ class Decade {
    *
    * Throws NotFoundError if not found.
    */
-
-  //   todo make private
 
   static async update(id, newName, newDescription) {
     const result = await db.query(
@@ -105,7 +98,7 @@ class Decade {
    *
    * Throws NotFoundError if decade not found.
    **/
-  //   todo make private
+
   static async remove(id) {
     const result = await db.query(
       `DELETE

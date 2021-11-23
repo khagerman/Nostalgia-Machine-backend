@@ -1,5 +1,5 @@
 const db = require("../db");
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, UnauthorizedError } = require("../expressError");
 
 /** Related functions for companies. */
 
@@ -7,23 +7,20 @@ const { NotFoundError } = require("../expressError");
 
 //post comments
 class Post {
-  /** Create a post (from data), update db, return new job data.
+  /** Create a post (from data), update db, return new post data.
    *
-   * data should be { title, url }
+   * data should be { title, url, decade_id }
    *
-   * Returns { id, title, url }
+   * Returns { id, title, url, decade_id}
    **/
-
-  ///get username
-  //get user id
 
   static async create(data, id) {
     const result = await db.query(
       `INSERT INTO post (title,
-                        url,username  )
-           VALUES ($1, $2, $3)
-           RETURNING id, title, url`,
-      [data.title, data.url, id]
+                        url,username,decade_id  )
+           VALUES ($1, $2, $3, $4)
+           RETURNING id, title, url, decade_id`,
+      [data.title, data.url, id, data.decade_id]
     );
     let post = result.rows[0];
 
@@ -32,30 +29,25 @@ class Post {
 
   /** Find post by id (
    *
-  
-   *
+   *Throws NotFoundError if not found.
    * Returns [{ id, title, url, username, comments:{} }]
    * */
 
   static async get(id) {
     let result = await db.query(
-      `SELECT id, title, url, i_remember, username FROM post WHERE id =$1"
-    );`[id]
+      `SELECT id, title, url, username FROM post WHERE id =$1`,
+      [id]
     );
 
     let post = result.rows[0];
 
     if (!post) throw new NotFoundError(`No post ${id}`);
-    //    id INTEGER PRIMARY KEY,
-    // username INTEGER REFERENCES users ON DELETE SET NULL,
-    // post_id INTEGER REFERENCES post ON DELETE CASCADE,
-    // text VARCHAR(100),
-    // created TIMESTAMP
-    let resComments = await db.query(
-      `SELECT id, username,text, created FROM comments WHERE post_id = $1
-    );`[id]
-    );
 
+    let resComments = await db.query(
+      `SELECT id, username,text, created FROM comments WHERE post_id = $1`,
+      [id]
+    );
+    post.comments = resComments.rows;
     return post;
   }
 
@@ -69,18 +61,25 @@ class Post {
    * Returns {name, description }
    *
    * Throws NotFoundError if not found.
+   * Throws UnauthorizedError if logged in user is not the author
    */
 
-  //   todo make private
-
-  static async update(id, newTitle, newURL) {
+  static async update(id, data, username) {
+    const getUsername = await db.query(
+      `SELECT username FROM post WHERE id=$1`,
+      [id]
+    );
+    let author = getUsername.rows[0];
+    console.log(author, username);
+    if (author.username !== username.username) {
+      throw new UnauthorizedError("You must be author to edit a post");
+    }
     const result = await db.query(
       `
-      UPDATE post SET title = $1, url  = $2 
-      WHERE id = $3
-      RETURNING id, title, url, username, i_remember
-    `,
-      [newTitle, newURL, id]
+      UPDATE post SET title=$1, url=$2 
+      WHERE id=$3
+      RETURNING id, title, url, username`,
+      [data.title, data.url, id]
     );
 
     let post = result.rows[0];
@@ -91,11 +90,22 @@ class Post {
   }
 
   /** Delete given post from database; returns undefined.
-   *
+   * 
+   *Throws UnauthorizedError if logged in user is not the author
+   
    * Throws NotFoundError if post not found.
    **/
 
-  static async remove(id) {
+  static async remove(id, username) {
+    const getUsername = await db.query(
+      `SELECT username FROM post WHERE id=$1`,
+      [id]
+    );
+    let author = getUsername.rows[0];
+    console.log(author, username);
+    if (author.username !== username) {
+      throw new UnauthorizedError("You must be author to edit a post");
+    }
     const result = await db.query(
       `DELETE
            FROM post

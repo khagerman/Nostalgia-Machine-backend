@@ -1,5 +1,5 @@
-/** Routes for users. */
-//todo check order of params, check for + on numbers, schemas
+/** Routes for decade. */
+
 const jsonschema = require("jsonschema");
 
 const express = require("express");
@@ -14,9 +14,9 @@ const commentNewSchema = require("../schemas/commentCreate.json");
 const commentUpdateSchema = require("../schemas/commentUpdate.json");
 const router = express.Router();
 
-/** GET /[username] => { user }
+/** GET /[id] => { decade }
  *
- * Returns { username and user's posts }
+ * Returns { id, name, description, posts:[]}
  *
  *
  * Authorization required:  none
@@ -32,13 +32,13 @@ router.get("/:id", async function (req, res, next) {
 });
 
 /** GET / =>
- *   { jobs: [ { id, title, salary, equity, companyHandle, companyName }, ...] }
- *
- * Can provide search filter in query:
- * - minSalary
- * - hasEquity (true returns only jobs with equity > 0, other values ignored)
- * - title (will find case-insensitive, partial matches)
+ *   {decades:[{
+      "id"
+      "name"
+      "description"
+    }...]}
 
+  get all decades
  * Authorization required: none
  */
 

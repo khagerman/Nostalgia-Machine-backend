@@ -1,5 +1,5 @@
-/** Routes for users. */
-//todo check order of params, check for + on numbers, schemas
+/** Routes for posts. */
+
 const jsonschema = require("jsonschema");
 
 const express = require("express");
@@ -14,24 +14,35 @@ const commentNewSchema = require("../schemas/commentCreate.json");
 const commentUpdateSchema = require("../schemas/commentUpdate.json");
 const router = express.Router();
 
-/** GET /[username] => { user }
+/** GET /[id] => { post }
  *
- * Returns { username and user's posts }
+ * Returns { "post": {
+    "id": 
+    "title"
+    "url",
+    "username",
+    "comments":[]
+  } }
  *
  *
- * Authorization required:  same user-as-:username
+ * Authorization required:  none
  **/
 
 router.get("/:id", async function (req, res, next) {
   try {
-    const post = await Post.get(req.params.id);
+    const post = await Post.get(+req.params.id);
     return res.json({ post });
   } catch (err) {
     return next(err);
   }
 });
-
-// todo need to get decade, add to decade_posts
+/** POST /{title,url, decade_id} => { post }
+ *
+ * Returns { "post": {"id":  "title", "url", decade_id} }
+ *
+ *
+ * Authorization required:  logged in
+ **/
 router.post("/", ensureLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, postNewSchema);
@@ -41,57 +52,60 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
     }
     const user = res.locals.user;
     console.log(user);
-    const post = await Post.create(req.body, +user.id);
+    const post = await Post.create(req.body, user.username);
     return res.status(201).json({ post });
   } catch (err) {
     return next(err);
   }
 });
 
-// /** PATCH /[username] { user } => { user }
-//  *
-//  * Data can include:
-//  *   { firstName, lastName, password, email }
-//  *
-//  * Returns { username, firstName, lastName, email, isAdmin }
-//  *
-//  * Authorization required: admin or same-user-as-:username
-//  **/
+/** PATCH /[postid] { post } => { post}
+ *Returns { "post": {"id":  "title", "url", decade_id, username} }
+ * Authorization required: same-user-as-username
+ **/
 
-router.patch("/:id", ensureCorrectUser, async function (req, res, next) {
+router.patch("/:id", ensureLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, postUpdateSchema);
     if (!validator.valid) {
       const errs = validator.errors.map((e) => e.stack);
       throw new BadRequestError(errs);
     }
-
-    const post = await Post.update(+req.params.id, req.body);
+    const user = res.locals.user;
+    console.log(user);
+    const post = await Post.update(+req.params.id, req.body, user);
     return res.json({ post });
   } catch (err) {
     return next(err);
   }
 });
 
-/** DELETE /[username]  =>  { deleted: username }
+/** DELETE /[postid]  =>  { deleted: postid }
  *
- * Authorization required: admin or same-user-as-:username
+ * Authorization required:  same-user-as-username
  **/
 
-router.delete("/:id", ensureCorrectUser, async function (req, res, next) {
+router.delete("/:id", ensureLoggedIn, async function (req, res, next) {
   try {
-    await Post.remove(+req.params.id);
+    const user = res.locals.user;
+    await Post.remove(+req.params.id, user.username);
     return res.json({ deleted: req.params.id });
   } catch (err) {
     return next(err);
   }
 });
 
-/** POST /[username]/jobs/[id]  { state } => { application }
+/** POST /[postid]/comments/
+ *create comment on post
+ * Returns {comment": {
+    "id":
+    "text": 
+    "created"
+    "username"
+    "post_id"
+  }}
  *
- * Returns {"applied": jobId}
- *
- * Authorization required: admin or same-user-as-:username
+ * Authorization required: logged in
  * */
 
 router.post("/:id/comments/", ensureLoggedIn, async function (req, res, next) {
@@ -112,9 +126,15 @@ router.post("/:id/comments/", ensureLoggedIn, async function (req, res, next) {
     return next(err);
   }
 });
+/** PATCH /[postid]/comments/commentid
+ *edit comment
+ * Returns {comment}
+ *
+ * Authorization required: same-user-as-username
+ * */
 router.patch(
   "/:id/comments/:commentid",
-  ensureCorrectUser,
+  ensureLoggedIn,
   async function (req, res, next) {
     try {
       const validator = jsonschema.validate(req.body, commentUpdateSchema);
@@ -122,46 +142,37 @@ router.patch(
         const errs = validator.errors.map((e) => e.stack);
         throw new BadRequestError(errs);
       }
+      const user = res.locals.user;
 
-      const comment = await Comment.update(+req.params.id, req.body);
+      const comment = await Comment.update(
+        +req.params.commentid,
+        req.body,
+        user.username
+      );
       return res.json({ comment });
     } catch (err) {
       return next(err);
     }
   }
 );
-
+/** DELETE/[postid]/comments/commentid
+ *delete comment
+ * Returns {deleted:commentid}
+ *
+ * Authorization required: same-user-as-username
+ * */
 router.delete(
   "/:id/comments/:commentid",
-  ensureCorrectUser,
+  ensureLoggedIn,
   async function (req, res, next) {
     try {
-      await Comment.remove(+req.params.commentid);
+      const user = res.locals.user;
+      await Comment.remove(+req.params.commentid, user.username);
       return res.json({ removed: req.params.commentid });
     } catch (err) {
       return next(err);
     }
   }
 );
-// /** GET /[username] => { user }
-//  *
-//  * Returns { username and user's posts }
-//  *
-//  *
-//  * Authorization required:  same user-as-:username
-//  **/
-
-// router.get(
-//   "/:userid/favorite",
-//   ensureCorrectUser,
-//   async function (req, res, next) {
-//     try {
-//       const favorites = await User.getUserFavorites(req.params.userid);
-//       return res.json({ favorites });
-//     } catch (err) {
-//       return next(err);
-//     }
-//   }
-// );
 
 module.exports = router;

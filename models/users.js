@@ -10,7 +10,7 @@ const {
 const { BCRYPT_WORK_FACTOR } = require("../config.js");
 
 /** Related functions for users. */
-//todo add admin???
+
 class User {
   /** authenticate user with username, password.
    *
@@ -23,7 +23,7 @@ class User {
     // try to find the user first
     const result = await db.query(
       `SELECT  username,
-                  password,
+                  password
            FROM users
            WHERE username = $1`,
       [username]
@@ -103,7 +103,7 @@ class User {
 
   static async get(username) {
     const userRes = await db.query(
-      `SELECT username,
+      `SELECT username
            FROM users
            WHERE username= $1`,
       [username]
@@ -114,13 +114,13 @@ class User {
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
     const userPosts = await db.query(
-      `SELECT id, title, url
+      `SELECT post.id, post.title, post.url
            FROM post 
            WHERE post.username = $1`,
       [username]
     );
 
-    user.posts = userPosts.rows.map((p) => p.id);
+    user.posts = userPosts.rows;
     return user;
   }
 
@@ -133,7 +133,7 @@ class User {
            FROM users
            WHERE username = $1
            RETURNING username`,
-      [id]
+      [username]
     );
     const user = result.rows[0];
 
@@ -144,7 +144,7 @@ class User {
    *
    *
    **/
-  //todo make add a favortie
+
   static async addFavorite(username, post_id) {
     const preCheck = await db.query(
       `SELECT id
@@ -154,7 +154,7 @@ class User {
     );
     const post = preCheck.rows[0];
 
-    if (!job) throw new NotFoundError(`No post: ${post_id}`);
+    if (!post) throw new NotFoundError(`No post: ${post_id}`);
 
     const preCheck2 = await db.query(
       `SELECT username
@@ -184,7 +184,7 @@ class User {
    *
    *
    **/
-  //todo delete a favortie
+
   static async deleteFavorite(username, post_id) {
     const preCheck = await db.query(
       `SELECT id
@@ -212,7 +212,7 @@ class User {
       [username, post_id]
     );
 
-    if (!duplicateCheck.rows[0])
+    if (!likedCheck.rows[0])
       throw new BadRequestError(`User ${username} never liked'${post_id}'`);
     await db.query(
       `DELETE
@@ -223,18 +223,19 @@ class User {
     );
   }
 
-  /**get all users favorites
+  /**get all  favorites of one user
    *
-   *returns {//todo}
+   *returns {[id, title, url,decade_id]}
    **/
   static async getUserFavorites(username) {
     let result = await db.query(
-      `SELECT id, title, url
-             FROM posts
+      `SELECT post.id, post.title, post.url, post.decade_id
+             FROM post
              LEFT JOIN user_memory
-               ON post.id = post_id
-               LEFT JOIN user
-            WHERE username= $1`,
+               ON post.id = user_memory.post_id
+               LEFT JOIN users
+               ON users.username = user_memory.username
+            WHERE users.username= $1`,
       [username]
     );
     const favorites = result.rows;

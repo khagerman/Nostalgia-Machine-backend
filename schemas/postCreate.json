@@ -12,8 +12,13 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 2000
+    },
+    "decade_id": {
+      "type": "integer",
+      "minLength": 1,
+      "maxLength": 2000
     }
   },
   "additionalProperties": false,
-  "required": ["title", "url"]
+  "required": ["title", "url", "decade_id"]
 }

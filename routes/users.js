@@ -15,7 +15,7 @@ const router = express.Router();
 
 /** GET /[username] => { user }
  *
- * Returns { username and user's posts }
+ * Returns {"user": { "username": "posts": [] }}
  *
  *
  * Authorization required:  same user-as-:username
@@ -29,7 +29,13 @@ router.get("/:username", ensureCorrectUser, async function (req, res, next) {
     return next(err);
   }
 });
-
+/** DELETE /[username] => { deleted }
+ *
+ * Returns {deleted:username}
+ *
+ *
+ * Authorization required:  same user-as-:username
+ **/
 router.delete("/:username", ensureCorrectUser, async function (req, res, next) {
   try {
     await User.remove(req.params.username);
@@ -39,16 +45,16 @@ router.delete("/:username", ensureCorrectUser, async function (req, res, next) {
   }
 });
 
-/** POST /[username]/jobs/[id]  { state } => { application }
+/** POST /[username]/favorite/[id]
  *
- * Returns {"applied": jobId}
+ * Returns {"favoriteAdded": postId}
  *
- * Authorization required: admin or same-user-as-:username
+ * Authorization required: same-user-as-:username
  * */
 
 router.post(
-  "/:username/favorites/:id",
-  ensureLoggedIn,
+  "/:username/favorite/:id",
+  ensureCorrectUser,
   async function (req, res, next) {
     try {
       const postId = +req.params.id;
@@ -59,11 +65,15 @@ router.post(
     }
   }
 );
-
+/** DELETE /[username]/favorite/[id]
+ *
+ * Returns {"removed": postId}
+ *
+ * Authorization required: same-user-as-:username
+ * */
 router.delete(
   "/:username/favorite/:id",
   ensureCorrectUser,
-  ensureLoggedIn,
   async function (req, res, next) {
     try {
       const postId = +req.params.id;
@@ -74,9 +84,9 @@ router.delete(
     }
   }
 );
-/** GET /[username] => { user }
+/** GET /[username] => { favorites}
  *
- * Returns { username and user's posts }
+ * Returns { favorites:[{"id","title", "url", "decade_id" }...] }
  *
  *
  * Authorization required:  same user-as-:username
