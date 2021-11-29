@@ -1,11 +1,8 @@
 const db = require("../db");
 const { NotFoundError, UnauthorizedError } = require("../expressError");
 
-/** Related functions for companies. */
+/** Related functions for posts */
 
-// TODO add post, delete post, get user id from saved? edit post???
-
-//post comments
 class Post {
   /** Create a post (from data), update db, return new post data.
    *
@@ -14,13 +11,13 @@ class Post {
    * Returns { id, title, url, decade_id}
    **/
 
-  static async create(data, id) {
+  static async create(data, username) {
     const result = await db.query(
       `INSERT INTO post (title,
                         url,username,decade_id  )
            VALUES ($1, $2, $3, $4)
-           RETURNING id, title, url, decade_id`,
-      [data.title, data.url, id, data.decade_id]
+           RETURNING id, username, title, url, decade_id`,
+      [data.title, data.url, username, data.decade_id]
     );
     let post = result.rows[0];
 
@@ -51,12 +48,11 @@ class Post {
     return post;
   }
 
-  /** Update decade data with `data`.
+  /** Update post data with `data`.
    *
-   * This is a "partial update" --- it's fine if data doesn't contain
-   * all the fields; this only changes provided ones.
+ 
    *
-   * Data can include: { newName, newDescription }
+   * Data can include: { title, url }
    *
    * Returns {name, description }
    *
@@ -71,7 +67,7 @@ class Post {
     );
     let author = getUsername.rows[0];
     console.log(author, username);
-    if (author.username !== username.username) {
+    if (author.username !== username) {
       throw new UnauthorizedError("You must be author to edit a post");
     }
     const result = await db.query(

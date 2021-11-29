@@ -1,7 +1,6 @@
 const db = require("../db");
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, UnauthorizedError } = require("../expressError");
 
-//post comments
 class Comment {
   /** Create a comment (from data), update db, return new comment
    *
@@ -75,7 +74,7 @@ class Comment {
 
     let comment = result.rows[0];
 
-    if (!comment) throw new NotFoundError(`No comment${id}`);
+    if (!comment) throw new NotFoundError(`No comment ${id}`);
 
     return comment;
   }

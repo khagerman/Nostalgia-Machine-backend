@@ -1,5 +1,3 @@
-//todo get all decades, update decade, add decade, remove decade
-//todo make private probably
 const db = require("../db");
 const { NotFoundError } = require("../expressError");
 
@@ -12,7 +10,7 @@ class Decade {
    *
    * Returns { id, name, description }
    **/
-  //todo backf=ground image, profile image??
+
   static async create({ name, description }) {
     const result = await db.query(
       `INSERT INTO decade (name, description)
@@ -77,14 +75,14 @@ class Decade {
    * Throws NotFoundError if not found.
    */
 
-  static async update(id, newName, newDescription) {
+  static async update(id, data) {
     const result = await db.query(
       `
       UPDATE decade SET name = $1, description  = $2 
       WHERE id = $3
       RETURNING id, name, description
     `,
-      [newName, newDescription, id]
+      [data.name, data.description, id]
     );
 
     let decade = result.rows[0];
