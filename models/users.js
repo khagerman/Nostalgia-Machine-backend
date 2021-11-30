@@ -240,7 +240,6 @@ class User {
     );
     const favorites = result.rows;
 
-    if (!favorites) throw new NotFoundError(`No user favorites`);
     return favorites;
   }
 }
