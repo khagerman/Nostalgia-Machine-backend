@@ -85,7 +85,7 @@ class User {
 
   static async findAll() {
     const result = await db.query(
-      `SELECT username,
+      `SELECT username
            FROM users
            ORDER BY username`
     );
@@ -137,7 +137,7 @@ class User {
     );
     const user = result.rows[0];
 
-    if (!user) throw new NotFoundError(`No user: ${id}`);
+    if (!user) throw new NotFoundError(`No user: ${username}`);
   }
 
   /**Add a favorite: update db, returns undefined.
