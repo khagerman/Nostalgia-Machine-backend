@@ -9,7 +9,7 @@ const {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
-  testJobIds,
+
   u1Token,
   u2Token,
 } = require("./_testCommon");
@@ -24,7 +24,7 @@ afterAll(commonAfterAll);
 describe("GET /posts/:id", function () {
   test("works for anon", async function () {
     const resp = await request(app).get(`/posts/15`);
-    console.log(resp.body);
+
     expect(resp.body).toEqual({
       post: {
         id: 15,
@@ -190,7 +190,7 @@ describe("POST /posts/:id/comments", function () {
       .post(`/posts/13/comments`)
       .send(newComment)
       .set("authorization", `Bearer ${u1Token}`);
-    console.log(resp.body);
+
     expect(resp.body).toEqual({
       comment: {
         id: expect.any(Number),

@@ -46,7 +46,7 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
       throw new BadRequestError(errs);
     }
     const user = res.locals.user;
-    console.log(user);
+
     const post = await Post.create(req.body, user.username);
     return res.status(201).json({ post });
   } catch (err) {

@@ -99,7 +99,6 @@ describe("update", function () {
     };
     await Comment.update(commentId, updateData, "u1");
 
-    console.log(commentId);
     const res = await db.query(
       `SELECT *
            FROM comments
@@ -164,7 +163,6 @@ describe("remove", function () {
       commentId = result.rows[0].id;
       await Comment.remove(commentId, "u2");
     } catch (err) {
-      console.log(err);
       expect(err instanceof UnauthorizedError).toBeTruthy();
     }
   });
@@ -173,7 +171,6 @@ describe("remove", function () {
       await Comment.remove(0, "u1");
       fail();
     } catch (err) {
-      console.log(err);
       expect(err instanceof Error).toBeTruthy();
     }
   });

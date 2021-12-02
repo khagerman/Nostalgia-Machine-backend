@@ -91,7 +91,7 @@ class Comment {
       [id]
     );
     let author = getUsername.rows[0];
-    console.log(author);
+
     if (author.username !== username) {
       throw new UnauthorizedError("You must be author to edit a comment");
     }

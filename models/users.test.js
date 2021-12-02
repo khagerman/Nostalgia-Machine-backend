@@ -137,7 +137,6 @@ describe("remove", function () {
       await User.remove("nope");
       fail();
     } catch (err) {
-      console.log(err, "notfound");
       expect(err instanceof NotFoundError).toBeTruthy();
     }
   });
@@ -175,7 +174,6 @@ describe("addFavorite", function () {
       await User.addFavorite("nope", 13);
       fail();
     } catch (err) {
-      console.log(err, "add fav no user");
       expect(err instanceof NotFoundError).toBeTruthy();
     }
   });

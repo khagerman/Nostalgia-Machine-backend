@@ -65,9 +65,9 @@ class Post {
       `SELECT username FROM post WHERE id=$1`,
       [id]
     );
-    console.log(getUsername);
+
     let author = getUsername.rows[0];
-    console.log(author, username, "patch");
+
     if (author.username !== username) {
       throw new UnauthorizedError("You must be author to edit a post");
     }
@@ -99,7 +99,7 @@ class Post {
       [id]
     );
     let author = getUsername.rows[0];
-    console.log(author, username);
+
     if (author.username !== username) {
       throw new UnauthorizedError("You must be author to edit a post");
     }

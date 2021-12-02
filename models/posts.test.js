@@ -33,7 +33,7 @@ describe("create", function () {
            FROM post
            WHERE id=${post.id}`
     );
-    console.log(result.rows[0]);
+
     expect(result.rows[0]).toEqual({
       id: expect.any(Number),
       title: "test test test",
@@ -63,7 +63,6 @@ describe("get", function () {
     try {
       await Post.get(0);
     } catch (err) {
-      console.log(err);
       expect(err instanceof NotFoundError).toBeTruthy();
     }
   });
@@ -83,7 +82,7 @@ describe("update", function () {
              FROM post
              WHERE id = 13`
     );
-    console.log(res);
+
     expect(res.rows[0]).toEqual({
       id: expect.any(Number),
       username: "u2",
@@ -130,7 +129,6 @@ describe("remove", function () {
       await Post.remove(0, "u2");
       fail();
     } catch (err) {
-      console.log(err);
       expect(err instanceof Error).toBeTruthy();
     }
   });

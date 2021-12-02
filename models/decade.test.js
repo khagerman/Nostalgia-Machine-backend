@@ -80,7 +80,6 @@ describe("get", function () {
     try {
       await Decade.get(0);
     } catch (err) {
-      console.log(err);
       expect(err instanceof NotFoundError).toBeTruthy();
     }
   });

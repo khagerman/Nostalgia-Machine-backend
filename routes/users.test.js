@@ -27,7 +27,7 @@ test("works for same user", async function () {
   const resp = await request(app)
     .get(`/users/u1`)
     .set("authorization", `Bearer ${u1Token}`);
-  console.log(resp.body);
+
   expect(resp.body).toEqual({
     user: {
       username: "u1",

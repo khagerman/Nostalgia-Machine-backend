@@ -24,7 +24,7 @@ afterAll(commonAfterAll);
 describe("GET /decade", function () {
   test("ok for anon", async function () {
     const resp = await request(app).get("/decade");
-    console.log(resp.body);
+
     expect(resp.body).toEqual({
       decades: [
         { id: 1, name: "1960s", description: "test test" },
@@ -41,7 +41,7 @@ describe("GET /decade", function () {
   describe("GET /decade/:id", function () {
     test("works for anon", async function () {
       const resp = await request(app).get(`/decade/1`);
-      console.log(resp.body);
+
       expect(resp.body).toEqual({
         decade: {
           id: 1,
