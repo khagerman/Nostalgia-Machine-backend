@@ -220,3 +220,36 @@ describe("deleteFavorite", function () {
     }
   });
 });
+/**************************************getUserFavorites */
+
+describe("deleteFavorite", function () {
+  test("works", async function () {
+    await User.addFavorite("u1", 13);
+    await User.addFavorite("u1", 14);
+    const res = await User.getUserFavorites("u1");
+
+    expect(res).toEqual([
+      {
+        id: 13,
+        title: "Dresses from Sears",
+        url: "https://i.pinimg.com/564x/a4/fb/bd/a4fbbd85e51a0319ab0583faeec9f99b.jpg",
+        decade_id: 1,
+      },
+      {
+        id: 14,
+        title: "Beer Shampoo",
+        url: "https://i.pinimg.com/564x/f3/57/e4/f357e4710747cffbb0df3dbfef27cdd5.jpg",
+        decade_id: 2,
+      },
+    ]);
+  });
+
+  test("not found if no such user", async function () {
+    try {
+      await User.deleteFavorite("nope", 13);
+      fail();
+    } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  });
+});

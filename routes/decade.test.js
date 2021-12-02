@@ -57,7 +57,7 @@ describe("GET /decade", function () {
         },
       });
     });
-    test("not found for no such company", async function () {
+    test("not found for no such decade", async function () {
       const resp = await request(app).get(`/decade/0`);
       expect(resp.statusCode).toEqual(404);
     });

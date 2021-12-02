@@ -16,12 +16,7 @@ const router = express.Router();
 
 /** GET /[id] => { post }
  *
- * Returns { "post": {
-    "id": 
-    "title"
-    "url",
-    "username",
-    "comments":[]
+ * Returns { "post": {"id" "title, "url","username", "comments":[]
   } }
  *
  *
@@ -72,8 +67,8 @@ router.patch("/:id", ensureLoggedIn, async function (req, res, next) {
       throw new BadRequestError(errs);
     }
     const user = res.locals.user;
-    console.log(user);
-    const post = await Post.update(+req.params.id, req.body, user);
+
+    const post = await Post.update(req.params.id, req.body, user.username);
     return res.json({ post });
   } catch (err) {
     return next(err);
@@ -89,7 +84,7 @@ router.delete("/:id", ensureLoggedIn, async function (req, res, next) {
   try {
     const user = res.locals.user;
     await Post.remove(+req.params.id, user.username);
-    return res.json({ deleted: req.params.id });
+    return res.json({ deleted: +req.params.id });
   } catch (err) {
     return next(err);
   }
@@ -121,6 +116,7 @@ router.post("/:id/comments/", ensureLoggedIn, async function (req, res, next) {
       user.username,
       +req.params.id
     );
+
     return res.status(201).json({ comment });
   } catch (err) {
     return next(err);
