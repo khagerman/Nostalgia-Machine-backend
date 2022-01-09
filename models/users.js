@@ -114,7 +114,7 @@ class User {
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
     const userPosts = await db.query(
-      `SELECT post.id, post.title, post.url
+      `SELECT post.id, post.title, post.url, post.username
            FROM post 
            WHERE post.username = $1`,
       [username]
@@ -229,7 +229,7 @@ class User {
    **/
   static async getUserFavorites(username) {
     let result = await db.query(
-      `SELECT post.id, post.title, post.url, post.decade_id
+      `SELECT post.id, post.title, post.url, post.decade_id, post.username
              FROM post
              LEFT JOIN user_memory
                ON post.id = user_memory.post_id

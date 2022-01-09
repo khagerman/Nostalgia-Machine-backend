@@ -56,7 +56,7 @@ class Decade {
 
     if (!decade) throw new NotFoundError(`No decade: ${id}`);
     const postsRes = await db.query(
-      `SELECT post.id, title, url
+      `SELECT post.id, title, url, username
            FROM post
            WHERE decade_id =$1`,
       [id]
