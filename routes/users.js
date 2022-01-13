@@ -84,7 +84,7 @@ router.delete(
     }
   }
 );
-/** GET /[username] => { favorites}
+/** GET /[username]/favorite => { favorites}
  *
  * Returns { favorites:[{"id","title", "url", "decade_id" }...] }
  *
