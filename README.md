@@ -10,6 +10,12 @@ This was built using NodeJS, Express, SQL, and PostgreSQL.  It features authenti
 SQL queries are contained in a custom ORM. Routes are protected with tokens and custom middleware. Each route/model is tested using jest. A detailed list of routes are below.
 ## View it here: https://nostalgia-api.herokuapp.com/
 
+## To run this code locally:
+Requirements: Postgres (I use https://postgresapp.com/)
+-   Install dependencies by running  `npm install` or `npm i` (if you are feeling hip)
+- Create the database and seed it by running `psql < data.sql`
+-   Start the server by running  `npm start`, it should be running on  `localhost:3001`
+- To run tests run `npm test`
 ## Routes
 
 ## **/auth**
