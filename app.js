@@ -9,7 +9,7 @@ const authRoutes = require("./routes/auth");
 const postRoutes = require("./routes/posts");
 const usersRoutes = require("./routes/users");
 const decadeRoutes = require("./routes/decade");
-
+const featuredRoutes = require("./routes/featured");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -20,7 +20,7 @@ app.use("/auth", authRoutes);
 app.use("/posts", postRoutes);
 app.use("/users", usersRoutes);
 app.use("/decade", decadeRoutes);
-
+app.use("/featured", featuredRoutes);
 /** Handle 404 errors -- this matches everything */
 app.use(function (req, res, next) {
   return next(new NotFoundError());

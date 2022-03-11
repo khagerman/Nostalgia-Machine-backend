@@ -1,3 +1,4 @@
+const { off } = require("../app");
 const db = require("../db");
 const { NotFoundError, UnauthorizedError } = require("../expressError");
 
@@ -32,7 +33,7 @@ class Post {
 
   static async get(id) {
     let result = await db.query(
-      `SELECT id, title, url, username FROM post WHERE id =$1`,
+      `SELECT id, title, url, username, decade_id FROM post WHERE id =$1`,
       [id]
     );
 
@@ -113,6 +114,34 @@ class Post {
     const post = result.rows[0];
 
     if (!post) throw new NotFoundError(`No post: ${id}`);
+  }
+  /** Get Most recent posts
+   * returns 6 newest posts
+   **/
+  static async getRecent() {
+    const getNew = await db.query(
+      `SELECT id, title, url, username FROM post order by id desc limit 6`
+    );
+    return getNew.rows;
+  }
+  //  get list of all all ids that are favorited
+  //  filter through ids and count how many favorites recieved in frequency obj
+  //sort keys by most favorites
+  // return top 6 favorites
+  static async getMostFavorite() {
+    const getFavorites = await db.query(
+      `SELECT  post_id
+            FROM user_memory`
+    );
+    let obj = {};
+    for (let num of getFavorites.rows) {
+      obj[num.post_id] = (obj[num.post_id] += 1) || 1;
+    }
+
+    let sorted = Object.keys(obj).sort(function (a, b) {
+      return obj[a] - obj[b];
+    });
+    return sorted.slice(-7).reverse();
   }
 }
 

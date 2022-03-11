@@ -26,14 +26,15 @@ CREATE TABLE post (
   decade_id INTEGER REFERENCES decade ON DELETE SET NULL
   -- createdAt DATETIME NOT NULL,
 );
-
+-- one to many relationship
 CREATE TABLE decade_posts (
     id SERIAL PRIMARY KEY,
     decade_id INTEGER REFERENCES decade ON DELETE CASCADE,
     post_id INTEGER REFERENCES post ON DELETE CASCADE
 );
 
-
+--one to many one post can have many comments
+--one user can have many comments
 CREATE TABLE comments (
   id SERIAL PRIMARY KEY,
   username VARCHAR(30) REFERENCES users ON DELETE SET NULL,
