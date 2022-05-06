@@ -141,7 +141,7 @@ class Post {
     let sorted = Object.keys(obj).sort(function (a, b) {
       return obj[a] - obj[b];
     });
-    return sorted.slice(-7).reverse();
+    return sorted.slice(-6).reverse();
   }
 }
 
